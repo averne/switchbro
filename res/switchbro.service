@@ -1,0 +1,15 @@
+[Unit]
+Description=Switchbro daemon
+After=network.target
+
+[Service]
+User=<user>
+Restart=always
+RestartSec=5
+Type=simple
+WorkingDirectory=<dir>
+ExecStart=/bin/bash -c 'env/bin/python3 src/main.py'
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target
