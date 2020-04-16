@@ -18,6 +18,8 @@ hidebots={HIDE_BOTS:d}&urlversion=2&days={DAYS}&limit={LIMIT}&action=feedrecentc
 
 BACKGROUND = "#f5f5f5"
 
+SLEEP_TIME = 5 * 60 # 5min
+
 def base_url(url: str):
     return url.split("&")[0]
 
@@ -100,7 +102,7 @@ def main(argc, argv):
         c.update()
         c.post()
         print(f"Processed at {time.asctime(time.gmtime())}")
-        time.sleep(60)
+        time.sleep(SLEEP_TIME)
 
 if __name__ == "__main__":
     main(len(sys.argv), sys.argv)
