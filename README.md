@@ -1,17 +1,17 @@
 # switchbro
 
-<p align="center"><img src="https://i.imgur.com/EXSL1i6.png" height=500></p>
-
-Discord webhook bot for switchbrew rss.
+Discord webhook bot for switchbrew rss:
 + Parses rss feed from switchbrew wiki and post updates.
-+ Renders diff as png
++ Renders diff as png.
+
+<p align="center"><img src="https://i.imgur.com/EXSL1i6.png" height=500></p>
 
 # Setup
 ```sh
 $ git clone https://github.com/averne/switchbro.git
 $ cd switchbro
 ```
-Create `webhook.url` file containing the url of your Discord webhook, or edit [main.py](https://github.com/averne/switchbro/blob/master/src/main.py).
+Create a `webhook.url` file containing the url of your Discord webhook, or edit [main.py](https://github.com/averne/switchbro/blob/master/src/main.py).
 ```sh
 $ python3 -m venv env
 $ source env/bin/activate
