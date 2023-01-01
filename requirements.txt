@@ -1,12 +1,12 @@
 cairocffi==1.1.0
 CairoSVG==2.4.2
 certifi==2020.4.5.1
-cffi==1.14.0
+cffi
 chardet==3.0.4
 cssselect2==0.3.0
 defusedxml==0.6.0
-feedparser==5.2.1
-html5lib==1.0.1
+feedparser
+html5lib
 idna==2.9
 Pillow==6.2.2
 pycparser==2.20
