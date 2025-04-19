@@ -4,6 +4,7 @@ import os, sys, time, io
 import json
 import requests
 import feedparser
+import pdf2image
 import weasyprint as wp
 from PIL import Image, ImageChops, ImageOps
 
@@ -13,8 +14,8 @@ WH_URL = ""
 DAYS      = 7       # Days to consider
 LIMIT     = 50      # Max number of edits
 HIDE_BOTS = False   # Hide bot edits
-RSS_URL   = f"https://switchbrew.org/w/api.php?\
-hidebots={HIDE_BOTS:d}&urlversion=2&days={DAYS}&limit={LIMIT}&action=feedrecentchanges&feedformat=rss"
+RSS_URL   = f"https://switchbrew.org/w/api.php?action=feedrecentchanges&feedformat=rss\
+&hidebots={HIDE_BOTS:d}&days={DAYS}&limit={LIMIT}"
 
 BACKGROUND = "#f5f5f5"
 
@@ -23,12 +24,32 @@ SLEEP_TIME = 5 * 60 # 5min
 def base_url(url: str):
     return url.split("&")[0]
 
+def resize_page(page):
+    content_width = content_height = 0
+    for child in page._page_box.descendants():
+        if (isinstance(child, wp.formatting_structure.boxes.TableBox)
+                or isinstance(child, wp.formatting_structure.boxes.TextBox)
+                or isinstance(child, wp.formatting_structure.boxes.BlockBox)
+                or isinstance(child, wp.formatting_structure.boxes.InlineBox)
+                or isinstance(child, wp.formatting_structure.boxes.LineBox)):
+
+            if not isinstance(child, wp.formatting_structure.boxes.BlockBox):
+                content_width = max(content_width, child.width +
+                    page._page_box.margin_left + page._page_box.margin_right)
+
+            content_height = max(content_height, child.height +
+                page._page_box.margin_left + page._page_box.margin_right)
+
+    if content_width:
+        page._page_box.width  = page.width  = content_width
+    if content_height:
+        page._page_box.height = page.height = content_height
+
 def trim_image(im: Image):
-    prev, cur = (), ImageChops.difference(im, Image.new(im.mode, im.size, im.getpixel((0, 0)))).getbbox()
-    while prev != cur:
-        im = im.crop(cur)
-        prev, cur = cur, ImageChops.difference(im, Image.new(im.mode, im.size, im.getpixel((0, 0)))).getbbox()
-    return ImageOps.expand(im, border=20, fill=BACKGROUND)
+    bg = Image.new(im.mode, im.size, im.getpixel((0,0)))
+    diff = ImageChops.difference(im, bg)
+    diff = ImageChops.add(diff, diff, 2.0, -100)
+    return ImageOps.expand(im.crop(diff.getbbox()), border=20, fill=BACKGROUND)
 
 class SwitchbrewRssClient:
     wh_url:      str
@@ -59,9 +80,14 @@ class SwitchbrewRssClient:
         bg_css    = wp.CSS(string=f"body {{ background: {BACKGROUND} }}")   # Add background
         scale_css = wp.CSS(string="@page { size: 15in; }")                  # Specify page size
         doc       = wp.HTML(string=html).render(stylesheets=[bg_css, scale_css])
-        png_data, _, _ = doc.copy(doc.pages[:1]).write_png()                # Select first page only
 
-        im = Image.open(io.BytesIO(png_data))
+        # Select first page only, resize to fit contents
+        resize_page(doc.pages[0])
+        pdf_data = doc.copy(doc.pages[:1]).write_pdf()
+
+        im, = pdf2image.convert_from_bytes(pdf_data, fmt="png", dpi=300)
+
+        # Attempt to trim remaining background
         im = trim_image(im)
 
         with io.BytesIO() as out:
